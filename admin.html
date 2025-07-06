@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quản lý Job - Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    /* Ẩn các nút tăng giảm của input type number */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100">
+  <div class="flex min-h-screen">
+    <aside class="w-64 bg-blue-900 text-white p-4 space-y-2">
+      <h2 class="text-xl font-bold mb-4">Admin Panel</h2>
+      <button onclick="showTab('jobList')" class="block w-full text-left py-2 px-3 rounded hover:bg-blue-700">📋 Danh
+        sách Job</button>
+      <button onclick="showTab('createJob')" class="block w-full text-left py-2 px-3 rounded hover:bg-blue-700">➕ Tạo
+        Job</button>
+      <button onclick="showTab('staffList')" class="block w-full text-left py-2 px-3 rounded hover:bg-blue-700">👥 Danh
+        sách nhân sự</button>
+      <button onclick="showTab('createStaff')" class="block w-full text-left py-2 px-3 rounded hover:bg-blue-700">➕ Tạo
+        nhân sự</button>
+    </aside>
+
+    <main class="flex-1 p-6 space-y-6">
+      <section id="jobList">
+        <h2 class="text-2xl font-semibold mb-4">📋 Danh sách Job</h2>
+        <div class="mb-4 flex space-x-2">
+          <input type="text" id="filterStaff" placeholder="Lọc theo mã nhân sự" class="p-2 rounded border w-1/4" />
+          <input type="date" id="filterFrom" class="p-2 rounded border" />
+          <input type="date" id="filterTo" class="p-2 rounded border" />
+          <button onclick="loadJobs()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Lọc</button>
+        </div>
+        <div id="jobListContainer"></div>
+      </section>
+
+      <div id="jobModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded w-full max-w-4xl relative max-h-[80vh] overflow-auto shadow-xl">
+          <button onclick="closeModal()" class="absolute top-2 right-2 text-xl font-bold">×</button>
+          <h3 class="text-xl font-bold mb-2">Chi tiết Job</h3>
+          <input id="modalJobId" class="border p-2 w-full mb-2 bg-gray-200" readonly />
+          <input id="modalJobName" class="border p-2 w-full mb-2" placeholder="Tên Job" />
+          <input id="modalJobDate" class="border p-2 w-full mb-2" type="date" />
+          <h4 class="font-semibold mt-4 mb-2">Phân công nhân sự</h4>
+          <div id="modalJobStaffList" class="space-y-2 border p-2 rounded"></div>
+          <div class="flex space-x-2 mt-4">
+            <button onclick="updateJob()" class="bg-blue-600 text-white px-4 py-2 rounded">Lưu thay đổi Job</button>
+            <button onclick="deleteJob()" class="bg-red-600 text-white px-4 py-2 rounded">Xoá Job</button>
+          </div>
+        </div>
+      </div>
+
+      <section id="createJob" class="hidden">
+        <h2 class="text-2xl font-semibold mb-4">➕ Tạo Job mới</h2>
+        <input id="newJobId" class="border p-2 w-full mb-2 bg-gray-200" readonly
+          placeholder="Mã Job sẽ được tạo tự động" />
+        <input id="newJobName" class="border p-2 w-full mb-2" placeholder="Tên Job" />
+        <input id="newJobDate" class="border p-2 w-full mb-4" type="date" />
+        <h3 class="font-semibold mb-2">Chọn nhân sự tham gia</h3>
+        <div id="staffCheckboxList" class="space-y-2 mb-4"></div>
+        <button onclick="createJob()" class="bg-blue-700 text-white px-4 py-2 rounded">Tạo Job</button>
+      </section>
+
+      <section id="staffList" class="hidden">
+        <h2 class="text-2xl font-semibold mb-4">👥 Danh sách nhân sự</h2>
+        <div id="staffListContainer" class="space-y-2"></div>
+      </section>
+
+      <div id="staffModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded w-full max-w-md relative max-h-[80vh] overflow-auto">
+          <button onclick="closeStaffModal()" class="absolute top-2 right-2 text-xl font-bold">×</button>
+          <h3 class="text-xl font-bold mb-4">Chỉnh sửa nhân sự</h3>
+          <input id="modalStaffCode" class="border p-2 w-full mb-2 bg-gray-200" readonly />
+          <input id="modalStaffName" class="border p-2 w-full mb-2" placeholder="Họ và tên" />
+          <input id="modalStaffRole" class="border p-2 w-full mb-4" placeholder="Vai trò" />
+          <div class="flex space-x-2">
+            <button onclick="updateStaff()" class="bg-blue-600 text-white px-4 py-2 rounded">Lưu thay đổi</button>
+            <button onclick="deleteStaff()" class="bg-red-600 text-white px-4 py-2 rounded">Xoá nhân sự</button>
+          </div>
+        </div>
+      </div>
+
+      <section id="createStaff" class="hidden">
+        <h2 class="text-2xl font-semibold mb-4">➕ Tạo nhân sự mới</h2>
+        <input id="staffName" class="border p-2 w-full mb-2" placeholder="Họ và tên" oninput="generateStaffCode()" />
+        <input id="staffCode" class="border p-2 w-full mb-2 bg-gray-200" readonly
+          placeholder="Mã nhân sự tự động tạo" />
+        <input id="staffRole" class="border p-2 w-full mb-4" placeholder="Vai trò (VD: Quay phim)" />
+        <button onclick="createStaff()" class="bg-blue-700 text-white px-4 py-2 rounded">Tạo nhân sự</button>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqb3VKbM0Wh837YWZJ-PudBoDVQzN1L3gl1q7Hk4Ph0207mWnyqd4NydtapYkvBXBhNw/exec";
+    let allAssignmentsData = [];
+
+    // =================================================================
+    // HELPER FUNCTIONS 
+    // =================================================================
+
+    /**
+     * Hiển thị giá trị cost được định dạng ngay lập tức
+     */
+    function updateCostDisplay(value, displayElementId) {
+      const displaySpan = document.getElementById(displayElementId);
+      if (!displaySpan) return;
+      const rawValue = parseInt(value);
+      if (isNaN(rawValue) || rawValue <= 0) {
+        displaySpan.textContent = '';
+        return;
+      }
+      const finalValue = rawValue * 1000;
+      displaySpan.textContent = new Intl.NumberFormat('de-DE').format(finalValue) + ' VNĐ';
+    }
+
+    // =================================================================
+    // MAIN FUNCTIONS
+    // =================================================================
+
+    function showTab(id) {
+      document.querySelectorAll("main section").forEach(s => s.classList.add("hidden"));
+      document.getElementById(id).classList.remove("hidden");
+      if (id === "jobList") loadJobs();
+      if (id === "staffList") loadStaffs();
+      if (id === "createJob") {
+        generateJobId();
+        loadStaffCheckboxes();
+      }
+      if (id === "createStaff") {
+        document.getElementById("staffName").value = "";
+        document.getElementById("staffCode").value = "";
+        document.getElementById("staffRole").value = "";
+      }
+    }
+
+    async function loadJobs() {
+      const container = document.getElementById("jobListContainer");
+      container.innerHTML = "<p>Đang tải dữ liệu...</p>";
+      try {
+        const res = await axios.get(`${SCRIPT_URL}?action=staff-jobs&code=ALL`);
+        allAssignmentsData = res.data;
+        const filterStaff = document.getElementById("filterStaff").value.trim().toUpperCase();
+        const fromDate = document.getElementById("filterFrom").value;
+        const toDate = document.getElementById("filterTo").value;
+        const matchingJobIDs = new Set();
+        allAssignmentsData.forEach(a => {
+          const staffMatch = !filterStaff || a.staffCode.toUpperCase() === filterStaff;
+          const fromDateMatch = !fromDate || a.date >= fromDate;
+          const toDateMatch = !toDate || a.date <= toDate;
+          if (staffMatch && fromDateMatch && toDateMatch) {
+            matchingJobIDs.add(a.jobID);
+          }
+        });
+        if (matchingJobIDs.size === 0) {
+          container.innerHTML = "<p>Không có job nào phù hợp với tiêu chí lọc.</p>";
+          return;
+        }
+        const groupedJobs = {};
+        for (const assignment of allAssignmentsData) {
+          if (!groupedJobs[assignment.jobID]) {
+            groupedJobs[assignment.jobID] = { jobName: assignment.jobName, date: assignment.date, totalCost: 0, staffCount: 0, unpaidCount: 0 };
+          }
+          groupedJobs[assignment.jobID].totalCost += Number(assignment.cost) || 0;
+          groupedJobs[assignment.jobID].staffCount++;
+          if (assignment.payment !== 'Đã thanh toán') {
+            groupedJobs[assignment.jobID].unpaidCount++;
+          }
+        }
+        let html = `<table class="w-full border-collapse border bg-white shadow-md rounded-lg">
+                <thead class="bg-blue-800 text-white">
+                    <tr>
+                        <th class="border p-2 text-left">Mã Job</th><th class="border p-2 text-left">Tên Job</th><th class="border p-2 text-center">Ngày</th><th class="border p-2 text-right">Tổng Cost</th><th class="border p-2 text-center">Nhân sự</th><th class="border p-2 text-center">Trạng thái Thanh toán</th><th class="border p-2 text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+        for (const jobID of matchingJobIDs) {
+          const job = groupedJobs[jobID];
+          if (!job) continue;
+          let paymentStatus, paymentClass;
+          if (job.unpaidCount === 0 && job.staffCount > 0) {
+            paymentStatus = "✅ Đã thanh toán"; paymentClass = "text-green-600";
+          } else if (job.unpaidCount === job.staffCount) {
+            paymentStatus = "❌ Chưa thanh toán"; paymentClass = "text-red-600";
+          } else {
+            paymentStatus = `⏳ Còn ${job.unpaidCount} chưa TT`; paymentClass = "text-orange-500";
+          }
+          html += `<tr class="hover:bg-gray-50">
+                    <td class="border p-2 font-mono">${jobID}</td><td class="border p-2 font-semibold">${job.jobName}</td><td class="border p-2 text-center">${job.date}</td><td class="border p-2 text-right">${(job.totalCost || 0).toLocaleString('vi-VN')} VNĐ</td><td class="border p-2 text-center">${job.staffCount}</td><td class="border p-2 text-center font-bold ${paymentClass}">${paymentStatus}</td><td class="border p-2 text-center">
+                        <button onclick="openJobModal('${jobID}')" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm">Xem chi tiết</button>
+                    </td>
+                </tr>`;
+        }
+        html += "</tbody></table>";
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = `<p class="text-red-500">Lỗi tải dữ liệu Job: ${e.message}</p>`;
+        console.error(e);
+      }
+    }
+
+    async function loadStaffCheckboxes() {
+      try {
+        const res = await axios.get(SCRIPT_URL + "?action=staffs");
+        const staffs = res.data;
+        const container = document.getElementById("staffCheckboxList");
+        container.innerHTML = "";
+        staffs.forEach(s => {
+          const div = document.createElement("div");
+          div.className = "grid grid-cols-3 items-center gap-2 p-1";
+          // --- MODIFIED INPUT FOR LIVE DISPLAY ---
+          div.innerHTML = `
+                    <div class="flex items-center">
+                      <input type="checkbox" id="staffcb_${s.code}" value="${s.code}" class="h-4 w-4">
+                      <label for="staffcb_${s.code}" class="ml-2 flex-1">${s.name} (${s.code})</label>
+                    </div>
+                    <input type="number" placeholder="Cost (nghìn)" class="border p-1 rounded w-full text-right" id="cost_${s.code}" oninput="updateCostDisplay(this.value, 'display_cost_${s.code}')">
+                    <span class="text-right text-gray-600 font-mono" id="display_cost_${s.code}"></span>
+                `;
+          container.appendChild(div);
+        });
+      } catch (e) {
+        alert("Lỗi tải danh sách nhân sự: " + e.message);
+      }
+    }
+
+    async function openJobModal(jobId) {
+      currentEditingJobId = jobId;
+      const assignmentsForJob = allAssignmentsData.filter(j => j.jobID === jobId);
+      if (assignmentsForJob.length === 0) return alert("Không tìm thấy thông tin job.");
+      const job = assignmentsForJob[0];
+      document.getElementById("modalJobId").value = job.jobID;
+      document.getElementById("modalJobName").value = job.jobName || "";
+      document.getElementById("modalJobDate").value = job.date || "";
+      const staffRes = await axios.get(SCRIPT_URL + "?action=staffs");
+      const allStaffsMap = staffRes.data.reduce((map, s) => (map[s.code] = s, map), {});
+      const container = document.getElementById("modalJobStaffList");
+      container.innerHTML = `<div class="grid grid-cols-5 gap-2 font-bold text-sm pb-1 border-b">
+            <span class="col-span-2">Nhân sự</span><span class="text-center">Nhập Cost (nghìn)</span><span class="text-center">Thành tiền</span><span class="text-center">Hành động</span>
+        </div>`;
+      assignmentsForJob.forEach(a => {
+        const paymentStatus = a.payment || "Chưa thanh toán";
+        const paymentClass = paymentStatus === 'Chưa thanh toán' ? 'text-red-500' : 'text-green-600';
+        const buttonText = paymentStatus === 'Chưa thanh toán' ? 'Thanh toán' : 'Hủy TT';
+        // --- MODIFIED INPUT FOR LIVE DISPLAY ---
+        const costInThousands = a.cost > 0 ? a.cost / 1000 : '';
+        const formattedCost = a.cost > 0 ? new Intl.NumberFormat('de-DE').format(a.cost) + ' VNĐ' : '';
+        const div = document.createElement("div");
+        div.className = "grid grid-cols-5 gap-2 items-center py-1";
+        div.innerHTML = `
+                <span class="col-span-2">${a.staffCode} (${allStaffsMap[a.staffCode]?.name || "?"})</span>
+                <input type="number" value="${costInThousands}" class="border p-1 rounded w-full text-right" data-staff-code="${a.staffCode}" oninput="updateCostDisplay(this.value, 'modal_display_cost_${a.staffCode}')">
+                <span id="modal_display_cost_${a.staffCode}" class="text-right text-gray-600 font-mono">${formattedCost}</span>
+                <div class="flex justify-center items-center space-x-1">
+                    <span class="font-semibold text-sm ${paymentClass}">${paymentStatus}</span>
+                    <button onclick="updatePaymentStatus('${a.jobID}', '${a.staffCode}')" class="bg-gray-200 hover:bg-gray-300 text-xs px-2 py-1 rounded">${buttonText}</button>
+                </div>
+            `;
+        container.appendChild(div);
+      });
+      document.getElementById("jobModal").classList.remove("hidden");
+    }
+
+    async function createJob() {
+      const id = document.getElementById("newJobId").value.trim();
+      const name = document.getElementById("newJobName").value.trim();
+      const date = document.getElementById("newJobDate").value;
+      if (!id || !name || !date) return alert("Vui lòng nhập đầy đủ thông tin job");
+      const staffCheckboxes = document.querySelectorAll("#staffCheckboxList input[type=checkbox]:checked");
+      const staff = [];
+      for (const cb of staffCheckboxes) {
+        // --- SIMPLIFIED cost retrieval ---
+        const costInThousands = document.getElementById("cost_" + cb.value).value;
+        const cost = (parseInt(costInThousands) || 0) * 1000;
+        if (isNaN(cost) || cost < 0) {
+          alert(`Cost không hợp lệ cho nhân sự ${cb.value}`); return;
+        }
+        staff.push({ staffCode: cb.value, cost: cost });
+      }
+      if (staff.length === 0) return alert("Phải chọn ít nhất 1 nhân sự cho job");
+      try {
+        const res = await axios.post(SCRIPT_URL, { action: "create-job", id, name, date, staff });
+        if (res.data.status === "ok") {
+          alert("Tạo job thành công"); showTab("jobList");
+        } else {
+          alert("Lỗi tạo job: " + res.data.message);
+        }
+      } catch (e) {
+        alert("Lỗi kết nối server: " + e.message);
+      }
+    }
+
+    async function updateJob() {
+      if (!currentEditingJobId) return alert("Không có job đang chỉnh sửa");
+      const id = document.getElementById("modalJobId").value.trim();
+      const name = document.getElementById("modalJobName").value.trim();
+      const date = document.getElementById("modalJobDate").value;
+      if (!id || !name || !date) return alert("Vui lòng nhập đầy đủ thông tin");
+      const costInputs = [...document.querySelectorAll("#modalJobStaffList input[type=number]")];
+      const staff = [];
+      for (const input of costInputs) {
+        // --- SIMPLIFIED cost retrieval ---
+        const staffCode = input.dataset.staffCode;
+        const costInThousands = input.value;
+        const cost = (parseInt(costInThousands) || 0) * 1000;
+        if (isNaN(cost) || cost < 0) {
+          alert(`Cost không hợp lệ cho nhân sự ${staffCode}`); return;
+        }
+        staff.push({ staffCode, cost });
+      }
+      try {
+        const res = await axios.post(SCRIPT_URL, { action: "update-job", id, name, date, staff });
+        if (res.data.status === "ok") {
+          alert("Cập nhật job thành công."); closeModal();
+        } else {
+          alert("Lỗi cập nhật job: " + res.data.message);
+        }
+      } catch (e) {
+        alert("Lỗi kết nối server: " + e.message);
+      }
+    }
+
+    // --- Other functions (no changes) ---
+    function closeModal() { document.getElementById("jobModal").classList.add("hidden"); currentEditingJobId = null; loadJobs(); }
+    async function updatePaymentStatus(jobID, staffCode) { const statusSpan = document.querySelector(`#modal_display_cost_${staffCode}`).nextElementSibling.querySelector('span'); if (!statusSpan) return; const currentStatus = statusSpan.textContent.trim(); const newStatus = currentStatus === 'Đã thanh toán' ? 'Chưa thanh toán' : 'Đã thanh toán'; try { const res = await axios.post(SCRIPT_URL, { action: "update-payment", jobID, staffCode, paymentStatus: newStatus }); if (res.data.status === "ok") { statusSpan.textContent = newStatus; statusSpan.className = `font-semibold text-sm ${newStatus === 'Chưa thanh toán' ? 'text-red-500' : 'text-green-600'}`; const button = statusSpan.nextElementSibling; button.textContent = newStatus === 'Chưa thanh toán' ? 'Thanh toán' : 'Hủy TT'; const assignmentToUpdate = allAssignmentsData.find(a => a.jobID === jobID && a.staffCode === staffCode); if (assignmentToUpdate) assignmentToUpdate.payment = newStatus; } else { alert("Lỗi cập nhật trạng thái: " + res.data.message); } } catch (e) { alert("Lỗi kết nối khi cập nhật thanh toán: " + e.message); } }
+    async function deleteJob() { if (!currentEditingJobId) return alert("Không có job đang chọn"); if (!confirm("Bạn có chắc muốn xoá job này? Thao tác này sẽ xoá tất cả phân công liên quan.")) return; try { const res = await axios.post(SCRIPT_URL, { action: "delete-job", id: currentEditingJobId }); if (res.data.status === "ok") { alert("Xoá job thành công"); closeModal(); } else { alert("Lỗi xoá job: " + res.data.message); } } catch (e) { alert("Lỗi kết nối server: " + e.message); } }
+    function generateJobId() { const random = Math.floor(Math.random() * 10000).toString().padStart(4, "0"); document.getElementById("newJobId").value = "JOB" + random; }
+    async function loadStaffs() { try { const res = await axios.get(SCRIPT_URL + "?action=staffs"); const allStaffs = res.data; const container = document.getElementById("staffListContainer"); if (allStaffs.length === 0) { container.innerHTML = "<p>Chưa có nhân sự nào.</p>"; return; } let html = `<table class="w-full border-collapse border bg-white"><thead><tr class="bg-blue-800 text-white"><th class="border p-2 text-left">Mã Nhân sự</th><th class="border p-2 text-left">Tên</th><th class="border p-2 text-left">Vai trò</th><th class="border p-2 text-center">Thao tác</th></tr></thead><tbody>`; allStaffs.forEach(s => { html += `<tr class="hover:bg-gray-50"><td class="border p-2 font-mono">${s.code}</td><td class="border p-2">${s.name}</td><td class="border p-2">${s.role}</td><td class="border p-2 text-center"><button onclick="openStaffModal('${s.code}')" class="text-blue-600 hover:underline">Sửa / Xoá</button></td></tr>`; }); html += "</tbody></table>"; container.innerHTML = html; } catch (e) { alert("Lỗi tải dữ liệu nhân sự: " + e.message); } }
+    function generateStaffCode() { const name = document.getElementById("staffName").value.trim(); if (!name) { document.getElementById("staffCode").value = ""; return; } const initials = name.split(" ").map(w => w[0].toUpperCase()).join(""); const random = Math.floor(Math.random() * 999).toString().padStart(3, "0"); document.getElementById("staffCode").value = initials + random; }
+    let currentEditingStaffCode = null; async function openStaffModal(code) { const res = await axios.get(SCRIPT_URL + "?action=staffs"); const staff = res.data.find(s => s.code === code); if (!staff) return alert("Không tìm thấy nhân sự"); currentEditingStaffCode = code; document.getElementById("modalStaffCode").value = staff.code; document.getElementById("modalStaffName").value = staff.name; document.getElementById("modalStaffRole").value = staff.role; document.getElementById("staffModal").classList.remove("hidden"); }
+    function closeStaffModal() { document.getElementById("staffModal").classList.add("hidden"); currentEditingStaffCode = null; }
+    async function createStaff() { const name = document.getElementById("staffName").value.trim(); const code = document.getElementById("staffCode").value.trim(); const role = document.getElementById("staffRole").value.trim(); if (!name || !code) return alert("Vui lòng nhập tên và mã nhân sự"); try { const res = await axios.post(SCRIPT_URL, { action: "create-staff", code, name, role }); if (res.data.status === "ok") { alert("Tạo nhân sự thành công"); showTab("staffList"); } else { alert("Lỗi tạo nhân sự: " + res.data.message); } } catch (e) { alert("Lỗi kết nối server: " + e.message); } }
+    async function updateStaff() { if (!currentEditingStaffCode) return alert("Không có nhân sự đang chỉnh sửa"); const code = document.getElementById("modalStaffCode").value.trim(); const name = document.getElementById("modalStaffName").value.trim(); const role = document.getElementById("modalStaffRole").value.trim(); if (!name) return alert("Vui lòng nhập tên nhân sự"); try { const res = await axios.post(SCRIPT_URL, { action: "update-staff", code, name, role }); if (res.data.status === "ok") { alert("Cập nhật nhân sự thành công"); closeStaffModal(); showTab("staffList"); } else { alert("Lỗi cập nhật nhân sự: " + res.data.message); } } catch (e) { alert("Lỗi kết nối server: " + e.message); } }
+    async function deleteStaff() { if (!currentEditingStaffCode) return alert("Không có nhân sự đang chọn"); if (!confirm("Bạn có chắc muốn xoá nhân sự này?")) return; try { const res = await axios.post(SCRIPT_URL, { action: "delete-staff", code: currentEditingStaffCode }); if (res.data.status === "ok") { alert("Xoá nhân sự thành công"); closeStaffModal(); showTab("staffList"); } else { alert("Lỗi xoá nhân sự: " + res.data.message); } } catch (e) { alert("Lỗi kết nối server: " + e.message); } }
+    showTab("jobList");
+  </script>
+</body>
+
+</html>
