@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>Kiểm tra lỗi CORS</h1>
+    <button onclick="testCORS()">Test POST Request</button>
+    <div id="result" style="margin-top: 20px; font-weight: bold;"></div>
+
+    <script>
+        // THAY THẾ BẰNG URL BẠN VỪA DEPLOY Ở BƯỚC 3
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPpFQUIsQ4e3fJbLT84XZWcF11TGBFggz93YqwAurXNiDLKSA6a7hAg5cySlNWzdxY/exec";
+
+        function testCORS() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerText = 'Đang gửi yêu cầu...';
+            resultDiv.style.color = 'orange';
+
+            axios.post(SCRIPT_URL, { action: 'test' })
+                .then(response => {
+                    console.log(response);
+                    resultDiv.innerText = '✅ Thành công! Phản hồi từ server: ' + JSON.stringify(response.data);
+                    resultDiv.style.color = 'green';
+                })
+                .catch(error => {
+                    console.error(error);
+                    resultDiv.innerText = '❌ Thất bại! Lỗi CORS vẫn còn. Hãy kiểm tra lại các bước deploy.';
+                    resultDiv.style.color = 'red';
+                });
+        }
+    </script>
+</body>
+</html>
