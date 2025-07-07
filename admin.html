@@ -4,55 +4,109 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Quản lý Job - Admin</title>
+  <title>Quản lý Công việc - Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <style>
     /* Custom styles for the calendar */
-    .calendar-grid { border-collapse: collapse; table-layout: fixed; width: 100%; }
-    .calendar-grid th, .calendar-grid td { border: 1px solid #e2e8f0; vertical-align: top; padding: 0.5rem; height: 120px; }
-    .calendar-grid th { text-align: center; font-weight: bold; padding: 0.75rem 0.5rem; }
-    .calendar-day-number { font-size: 0.875rem; font-weight: bold; }
-    .today .calendar-day-number { color: white; background-color: #3182ce; border-radius: 50%; width: 1.75rem; height: 1.75rem; text-align: center; line-height: 1.75rem; display: inline-block; }
-    .job-entry {
-      font-size: 0.75rem; background-color: #4299e1; color: white; border-radius: 4px;
-      padding: 2px 4px; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;
+    .calendar-grid {
+      border-collapse: collapse;
+      table-layout: fixed;
+      width: 100%;
     }
+
+    .calendar-grid th,
+    .calendar-grid td {
+      border: 1px solid #e2e8f0;
+      vertical-align: top;
+      padding: 0.5rem;
+      height: 120px;
+    }
+
+    .calendar-grid th {
+      text-align: center;
+      font-weight: bold;
+      padding: 0.75rem 0.5rem;
+    }
+
+    .calendar-day-number {
+      font-size: 0.875rem;
+      font-weight: bold;
+    }
+
+    .today .calendar-day-number {
+      color: white;
+      background-color: #3182ce;
+      border-radius: 50%;
+      width: 1.75rem;
+      height: 1.75rem;
+      text-align: center;
+      line-height: 1.75rem;
+      display: inline-block;
+    }
+
+    .job-entry {
+      font-size: 0.75rem;
+      background-color: #4299e1;
+      color: white;
+      border-radius: 4px;
+      padding: 2px 4px;
+      margin-top: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
     /* Hide number input spinners */
-    input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-    input[type=number] { -moz-appearance: textfield; }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
   </style>
 </head>
 
 <body class="bg-gray-100">
   <div class="flex min-h-screen">
     <aside class="w-64 bg-blue-900 text-white p-4 space-y-2">
-      <h2 class="text-xl font-bold mb-4">Admin Panel</h2>
-      <button onclick="showTab('jobList')" class="block w-full text-left py-2 px-3 rounded hover:bg-blue-700">Danh sách Job</button>
-      <button onclick="showTab('createJob')" class="block w-full text-left py-2 px-3 rounded hover:bg-blue-700">Tạo Job</button>
-      <button onclick="showTab('staffList')" class="block w-full text-left py-2 px-3 rounded hover:bg-blue-700">Danh sách nhân sự</button>
-      <button onclick="showTab('createStaff')" class="block w-full text-left py-2 px-3 rounded hover:bg-blue-700">Tạo nhân sự</button>
+      <h2 class="text-xl font-bold mb-4">Trang chủ Quản Lý</h2>
+      <button onclick="showTab('jobList')" class="block w-full text-left py-2 px-3 rounded hover:bg-blue-700">Danh sách
+        Job</button>
+      <button onclick="showTab('createJob')" class="block w-full text-left py-2 px-3 rounded hover:bg-blue-700">Tạo
+        Job</button>
+      <button onclick="showTab('staffList')" class="block w-full text-left py-2 px-3 rounded hover:bg-blue-700">Danh
+        sách nhân sự</button>
+      <button onclick="showTab('createStaff')" class="block w-full text-left py-2 px-3 rounded hover:bg-blue-700">Tạo
+        nhân sự</button>
     </aside>
 
     <main class="flex-1 p-6 space-y-6">
       <section id="jobList">
-        <h2 class="text-2xl font-semibold mb-4">Danh sách Job</h2>
+        <h2 class="text-2xl font-semibold mb-4">Danh sách công việc</h2>
         <div class="mb-4 flex justify-between items-center">
-            <div class="flex space-x-2 items-center">
-                <input type="text" id="filterStaff" placeholder="Lọc theo mã nhân sự" class="p-2 rounded border w-48" />
-                <input type="date" id="filterFrom" class="p-2 rounded border" />
-                <input type="date" id="filterTo" class="p-2 rounded border" />
-                <select id="filterPayment" class="p-2 rounded border bg-white">
-                    <option value="all">Tất cả thanh toán</option>
-                    <option value="paid">Đã thanh toán</option>
-                    <option value="unpaid">Chưa thanh toán</option>
-                </select>
-                <button onclick="applyFiltersAndRender()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Lọc</button>
-            </div>
-            <div class="flex space-x-2">
-                <button onclick="toggleJobView('table')" id="tableViewBtn" class="bg-blue-700 text-white px-4 py-2 rounded">Xem Bảng</button>
-                <button onclick="toggleJobView('calendar')" id="calendarViewBtn" class="bg-gray-500 text-white px-4 py-2 rounded">Xem Lịch</button>
-            </div>
+          <div class="flex space-x-2 items-center">
+            <input type="text" id="filterStaff" placeholder="Lọc theo mã nhân sự" class="p-2 rounded border w-48" />
+            <input type="date" id="filterFrom" class="p-2 rounded border" />
+            <input type="date" id="filterTo" class="p-2 rounded border" />
+            <select id="filterPayment" class="p-2 rounded border bg-white">
+              <option value="all">Tất cả thanh toán</option>
+              <option value="paid">Đã thanh toán</option>
+              <option value="unpaid">Chưa thanh toán</option>
+            </select>
+            <button onclick="applyFiltersAndRender()"
+              class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Lọc</button>
+          </div>
+          <div class="flex space-x-2">
+            <button onclick="toggleJobView('table')" id="tableViewBtn"
+              class="bg-blue-700 text-white px-4 py-2 rounded">Xem Bảng</button>
+            <button onclick="toggleJobView('calendar')" id="calendarViewBtn"
+              class="bg-gray-500 text-white px-4 py-2 rounded">Xem Lịch</button>
+          </div>
         </div>
         <div id="jobListContainer"></div>
         <div id="jobCalendarContainer" class="hidden"></div>
@@ -61,26 +115,28 @@
       <div id="jobModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white p-6 rounded w-full max-w-4xl relative max-h-[80vh] overflow-auto shadow-xl">
           <button onclick="closeModal()" class="absolute top-2 right-2 text-xl font-bold">×</button>
-          <h3 class="text-xl font-bold mb-2">Chi tiết Job</h3>
+          <h3 class="text-xl font-bold mb-2">Chi tiết công việc</h3>
           <input id="modalJobId" class="border p-2 w-full mb-2 bg-gray-200" readonly />
           <input id="modalJobName" class="border p-2 w-full mb-2" placeholder="Tên Job" />
           <input id="modalJobDate" class="border p-2 w-full mb-2" type="date" />
           <h4 class="font-semibold mt-4 mb-2">Phân công nhân sự</h4>
           <div id="modalJobStaffList" class="space-y-2 border p-2 rounded"></div>
           <div class="flex space-x-2 mt-4">
-            <button onclick="updateJob()" class="bg-blue-600 text-white px-4 py-2 rounded">Lưu thay đổi Job</button>
-            <button onclick="deleteJob()" class="bg-red-600 text-white px-4 py-2 rounded">Xoá Job</button>
+            <button onclick="updateJob()" class="bg-blue-600 text-white px-4 py-2 rounded">Lưu thay đổi công
+              việc</button>
+            <button onclick="deleteJob()" class="bg-red-600 text-white px-4 py-2 rounded">Xoá công việc</button>
           </div>
         </div>
       </div>
       <section id="createJob" class="hidden">
-        <h2 class="text-2xl font-semibold mb-4">➕ Tạo Job mới</h2>
-        <input id="newJobId" class="border p-2 w-full mb-2 bg-gray-200" readonly placeholder="Mã Job sẽ được tạo tự động" />
+        <h2 class="text-2xl font-semibold mb-4">➕ Tạo công việc mới</h2>
+        <input id="newJobId" class="border p-2 w-full mb-2 bg-gray-200" readonly
+          placeholder="Mã Job sẽ được tạo tự động" />
         <input id="newJobName" class="border p-2 w-full mb-2" placeholder="Tên Job" />
         <input id="newJobDate" class="border p-2 w-full mb-4" type="date" />
         <h3 class="font-semibold mb-2">Chọn nhân sự tham gia</h3>
         <div id="staffCheckboxList" class="space-y-2 mb-4"></div>
-        <button onclick="createJob()" class="bg-blue-700 text-white px-4 py-2 rounded">Tạo Job</button>
+        <button onclick="createJob()" class="bg-blue-700 text-white px-4 py-2 rounded">Tạo công việc</button>
       </section>
       <section id="staffList" class="hidden">
         <h2 class="text-2xl font-semibold mb-4">👥 Danh sách nhân sự</h2>
@@ -102,16 +158,17 @@
       <section id="createStaff" class="hidden">
         <h2 class="text-2xl font-semibold mb-4">➕ Tạo nhân sự mới</h2>
         <input id="staffName" class="border p-2 w-full mb-2" placeholder="Họ và tên" oninput="generateStaffCode()" />
-        <input id="staffCode" class="border p-2 w-full mb-2 bg-gray-200" readonly placeholder="Mã nhân sự tự động tạo" />
+        <input id="staffCode" class="border p-2 w-full mb-2 bg-gray-200" readonly
+          placeholder="Mã nhân sự tự động tạo" />
         <input id="staffRole" class="border p-2 w-full mb-4" placeholder="Vai trò (VD: Quay phim)" />
         <button onclick="createStaff()" class="bg-blue-700 text-white px-4 py-2 rounded">Tạo nhân sự</button>
       </section>
     </main>
   </div>
 
-<script>
+  <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqb3VKbM0Wh837YWZJ-PudBoDVQzN1L3gl1q7Hk4Ph0207mWnyqd4NydtapYkvBXBhNw/exec"; // ‼️ THAY THẾ BẰNG URL CỦA BẠN
-    
+
     // --- GLOBAL STATE ---
     let allAssignmentsData = [];
     let filteredJobsData = [];
@@ -120,143 +177,143 @@
 
     // --- HELPER FUNCTIONS ---
     function updateCostDisplay(value, displayElementId) {
-        const displaySpan = document.getElementById(displayElementId);
-        if (!displaySpan) return;
-        const rawValue = parseInt(value);
-        if (isNaN(rawValue) || rawValue <= 0) { displaySpan.textContent = ''; return; }
-        const finalValue = rawValue * 1000;
-        displaySpan.textContent = new Intl.NumberFormat('de-DE').format(finalValue) + ' VNĐ';
+      const displaySpan = document.getElementById(displayElementId);
+      if (!displaySpan) return;
+      const rawValue = parseInt(value);
+      if (isNaN(rawValue) || rawValue <= 0) { displaySpan.textContent = ''; return; }
+      const finalValue = rawValue * 1000;
+      displaySpan.textContent = new Intl.NumberFormat('de-DE').format(finalValue) + ' VNĐ';
     }
 
     // --- MAIN LOGIC ---
     function showTab(id) {
-        document.querySelectorAll("main section").forEach(s => s.classList.add("hidden"));
-        document.getElementById(id).classList.remove("hidden");
-        if (id === "jobList") { loadJobs(); }
-        if (id === "staffList") loadStaffs();
-        if (id === "createJob") { generateJobId(); loadStaffCheckboxes(); }
-        if (id === "createStaff") { document.getElementById("staffName").value = ""; document.getElementById("staffCode").value = ""; document.getElementById("staffRole").value = ""; }
+      document.querySelectorAll("main section").forEach(s => s.classList.add("hidden"));
+      document.getElementById(id).classList.remove("hidden");
+      if (id === "jobList") { loadJobs(); }
+      if (id === "staffList") loadStaffs();
+      if (id === "createJob") { generateJobId(); loadStaffCheckboxes(); }
+      if (id === "createStaff") { document.getElementById("staffName").value = ""; document.getElementById("staffCode").value = ""; document.getElementById("staffRole").value = ""; }
     }
 
     async function loadJobs() {
-        document.getElementById("jobListContainer").innerHTML = "<p>Đang tải dữ liệu...</p>";
-        document.getElementById("jobCalendarContainer").innerHTML = "<p>Đang tải dữ liệu...</p>";
-        try {
-            const res = await axios.get(`${SCRIPT_URL}?action=staff-jobs&code=ALL`);
-            allAssignmentsData = res.data;
-            applyFiltersAndRender();
-        } catch (e) {
-            const errorMsg = `<p class="text-red-500">Lỗi tải dữ liệu Job: ${e.message}</p>`;
-            document.getElementById("jobListContainer").innerHTML = errorMsg;
-            document.getElementById("jobCalendarContainer").innerHTML = errorMsg;
-            console.error(e);
-        }
+      document.getElementById("jobListContainer").innerHTML = "<p>Đang tải dữ liệu...</p>";
+      document.getElementById("jobCalendarContainer").innerHTML = "<p>Đang tải dữ liệu...</p>";
+      try {
+        const res = await axios.get(`${SCRIPT_URL}?action=staff-jobs&code=ALL`);
+        allAssignmentsData = res.data;
+        applyFiltersAndRender();
+      } catch (e) {
+        const errorMsg = `<p class="text-red-500">Lỗi tải dữ liệu Job: ${e.message}</p>`;
+        document.getElementById("jobListContainer").innerHTML = errorMsg;
+        document.getElementById("jobCalendarContainer").innerHTML = errorMsg;
+        console.error(e);
+      }
     }
-    
+
     function applyFiltersAndRender() {
-        const filterStaff = document.getElementById("filterStaff").value.trim().toUpperCase();
-        const fromDate = document.getElementById("filterFrom").value;
-        const toDate = document.getElementById("filterTo").value;
-        const paymentStatusFilter = document.getElementById("filterPayment").value;
+      const filterStaff = document.getElementById("filterStaff").value.trim().toUpperCase();
+      const fromDate = document.getElementById("filterFrom").value;
+      const toDate = document.getElementById("filterTo").value;
+      const paymentStatusFilter = document.getElementById("filterPayment").value;
 
-        // Group assignments by job ID first to determine the overall payment status of each job
-        const jobsGrouped = {};
-        allAssignmentsData.forEach(a => {
-            if (!jobsGrouped[a.jobID]) {
-                jobsGrouped[a.jobID] = {
-                    assignments: [],
-                    unpaidCount: 0,
-                    totalCount: 0
-                };
-            }
-            jobsGrouped[a.jobID].assignments.push(a);
-            jobsGrouped[a.jobID].totalCount++;
-            if (a.payment !== 'Đã thanh toán') {
-                jobsGrouped[a.jobID].unpaidCount++;
-            }
-        });
-
-        filteredJobsData = [];
-        for (const jobID in jobsGrouped) {
-            const job = jobsGrouped[jobID];
-            const firstAssignment = job.assignments[0];
-            if (!firstAssignment.date) continue;
-
-            const jobDate = firstAssignment.date.substring(0, 10);
-            const fromDateMatch = !fromDate || jobDate >= fromDate;
-            const toDateMatch = !toDate || jobDate <= toDate;
-
-            // Check if any staff in the job matches the filter
-            const staffMatch = !filterStaff || job.assignments.some(a => a.staffCode.toUpperCase() === filterStaff);
-
-            // Check payment status
-            const isFullyPaid = job.unpaidCount === 0;
-            const isFullyUnpaid = job.unpaidCount === job.totalCount;
-            let paymentMatch = true;
-            if (paymentStatusFilter === 'paid') {
-                paymentMatch = isFullyPaid;
-            } else if (paymentStatusFilter === 'unpaid') {
-                paymentMatch = !isFullyPaid; // Show if any part is unpaid
-            }
-
-            if (staffMatch && fromDateMatch && toDateMatch && paymentMatch) {
-                filteredJobsData.push(...job.assignments);
-            }
+      // Group assignments by job ID first to determine the overall payment status of each job
+      const jobsGrouped = {};
+      allAssignmentsData.forEach(a => {
+        if (!jobsGrouped[a.jobID]) {
+          jobsGrouped[a.jobID] = {
+            assignments: [],
+            unpaidCount: 0,
+            totalCount: 0
+          };
         }
-        
-        renderCurrentView();
+        jobsGrouped[a.jobID].assignments.push(a);
+        jobsGrouped[a.jobID].totalCount++;
+        if (a.payment !== 'Đã thanh toán') {
+          jobsGrouped[a.jobID].unpaidCount++;
+        }
+      });
+
+      filteredJobsData = [];
+      for (const jobID in jobsGrouped) {
+        const job = jobsGrouped[jobID];
+        const firstAssignment = job.assignments[0];
+        if (!firstAssignment.date) continue;
+
+        const jobDate = firstAssignment.date.substring(0, 10);
+        const fromDateMatch = !fromDate || jobDate >= fromDate;
+        const toDateMatch = !toDate || jobDate <= toDate;
+
+        // Check if any staff in the job matches the filter
+        const staffMatch = !filterStaff || job.assignments.some(a => a.staffCode.toUpperCase() === filterStaff);
+
+        // Check payment status
+        const isFullyPaid = job.unpaidCount === 0;
+        const isFullyUnpaid = job.unpaidCount === job.totalCount;
+        let paymentMatch = true;
+        if (paymentStatusFilter === 'paid') {
+          paymentMatch = isFullyPaid;
+        } else if (paymentStatusFilter === 'unpaid') {
+          paymentMatch = !isFullyPaid; // Show if any part is unpaid
+        }
+
+        if (staffMatch && fromDateMatch && toDateMatch && paymentMatch) {
+          filteredJobsData.push(...job.assignments);
+        }
+      }
+
+      renderCurrentView();
     }
 
     function renderCurrentView() {
-        if (currentView === 'table') {
-            renderJobTable(filteredJobsData);
-        } else {
-            renderJobCalendar(filteredJobsData);
-        }
+      if (currentView === 'table') {
+        renderJobTable(filteredJobsData);
+      } else {
+        renderJobCalendar(filteredJobsData);
+      }
     }
 
     function toggleJobView(view) {
-        currentView = view;
-        const tableBtn = document.getElementById('tableViewBtn');
-        const calendarBtn = document.getElementById('calendarViewBtn');
-        const tableContainer = document.getElementById('jobListContainer');
-        const calendarContainer = document.getElementById('jobCalendarContainer');
+      currentView = view;
+      const tableBtn = document.getElementById('tableViewBtn');
+      const calendarBtn = document.getElementById('calendarViewBtn');
+      const tableContainer = document.getElementById('jobListContainer');
+      const calendarContainer = document.getElementById('jobCalendarContainer');
 
-        if (view === 'table') {
-            tableBtn.classList.replace('bg-gray-500', 'bg-blue-700');
-            calendarBtn.classList.replace('bg-blue-700', 'bg-gray-500');
-            tableContainer.classList.remove('hidden');
-            calendarContainer.classList.add('hidden');
-        } else {
-            tableBtn.classList.replace('bg-blue-700', 'bg-gray-500');
-            calendarBtn.classList.replace('bg-gray-500', 'bg-blue-700');
-            tableContainer.classList.add('hidden');
-            calendarContainer.classList.remove('hidden');
-        }
-        renderCurrentView();
+      if (view === 'table') {
+        tableBtn.classList.replace('bg-gray-500', 'bg-blue-700');
+        calendarBtn.classList.replace('bg-blue-700', 'bg-gray-500');
+        tableContainer.classList.remove('hidden');
+        calendarContainer.classList.add('hidden');
+      } else {
+        tableBtn.classList.replace('bg-blue-700', 'bg-gray-500');
+        calendarBtn.classList.replace('bg-gray-500', 'bg-blue-700');
+        tableContainer.classList.add('hidden');
+        calendarContainer.classList.remove('hidden');
+      }
+      renderCurrentView();
     }
 
     // --- TABLE AND CALENDAR RENDER FUNCTIONS ---
     function renderJobTable(assignments) {
-        const container = document.getElementById("jobListContainer");
-        if (assignments.length === 0) {
-            container.innerHTML = "<p>Không có job nào phù hợp.</p>";
-            return;
-        }
+      const container = document.getElementById("jobListContainer");
+      if (assignments.length === 0) {
+        container.innerHTML = "<p>Không có job nào phù hợp.</p>";
+        return;
+      }
 
-        const groupedJobs = {};
-        for (const assignment of assignments) {
-            if (!groupedJobs[assignment.jobID]) {
-                groupedJobs[assignment.jobID] = {
-                    jobName: assignment.jobName,
-                    date: assignment.date,
-                    assignments: []
-                };
-            }
-            groupedJobs[assignment.jobID].assignments.push(assignment);
+      const groupedJobs = {};
+      for (const assignment of assignments) {
+        if (!groupedJobs[assignment.jobID]) {
+          groupedJobs[assignment.jobID] = {
+            jobName: assignment.jobName,
+            date: assignment.date,
+            assignments: []
+          };
         }
-        
-        let html = `<table class="w-full border-collapse border bg-white shadow-md rounded-lg">
+        groupedJobs[assignment.jobID].assignments.push(assignment);
+      }
+
+      let html = `<table class="w-full border-collapse border bg-white shadow-md rounded-lg">
             <thead class="bg-blue-800 text-white">
                 <tr>
                     <th class="border p-2 text-left">Tên Job</th>
@@ -269,58 +326,58 @@
             </thead>
             <tbody>`;
 
-        for (const jobID in groupedJobs) {
-            const job = groupedJobs[jobID];
-            const totalRows = job.assignments.length;
-            job.assignments.forEach((assign, index) => {
-                const paymentStatus = assign.payment || "Chưa thanh toán";
-                const paymentClass = paymentStatus === 'Chưa thanh toán' ? 'text-red-600' : 'text-green-600';
-                html += `<tr class="hover:bg-gray-50">`;
-                if (index === 0) {
-                    html += `<td class="border p-2 font-semibold" rowspan="${totalRows}">${job.jobName}<div class="text-xs font-mono text-gray-500">${jobID}</div></td>
-                             <td class="border p-2 text-center" rowspan="${totalRows}">${job.date ? job.date.substring(0,10) : ''}</td>`;
-                }
-                html += `<td class="border p-2">${assign.staffCode}</td>
+      for (const jobID in groupedJobs) {
+        const job = groupedJobs[jobID];
+        const totalRows = job.assignments.length;
+        job.assignments.forEach((assign, index) => {
+          const paymentStatus = assign.payment || "Chưa thanh toán";
+          const paymentClass = paymentStatus === 'Chưa thanh toán' ? 'text-red-600' : 'text-green-600';
+          html += `<tr class="hover:bg-gray-50">`;
+          if (index === 0) {
+            html += `<td class="border p-2 font-semibold" rowspan="${totalRows}">${job.jobName}<div class="text-xs font-mono text-gray-500">${jobID}</div></td>
+                             <td class="border p-2 text-center" rowspan="${totalRows}">${job.date ? job.date.substring(0, 10) : ''}</td>`;
+          }
+          html += `<td class="border p-2">${assign.staffCode}</td>
                          <td class="border p-2 text-right">${(assign.cost || 0).toLocaleString('vi-VN')}</td>
                          <td class="border p-2 text-center font-bold ${paymentClass}">${paymentStatus}</td>`;
-                if (index === 0) {
-                     html += `<td class="border p-2 text-center" rowspan="${totalRows}">
+          if (index === 0) {
+            html += `<td class="border p-2 text-center" rowspan="${totalRows}">
                                 <button onclick="openJobModal('${jobID}')" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm">Xem / Sửa</button>
                               </td>`;
-                }
-                html += `</tr>`;
-            });
-        }
+          }
+          html += `</tr>`;
+        });
+      }
 
-        html += "</tbody></table>";
-        container.innerHTML = html;
+      html += "</tbody></table>";
+      container.innerHTML = html;
     }
 
     function renderJobCalendar(jobs) {
-        const container = document.getElementById('jobCalendarContainer');
-        const jobsByDate = new Map();
-        
-        jobs.forEach(job => {
-            if (!job.date) return;
-            const dateKey = job.date.substring(0, 10);
-            
-            if (!jobsByDate.has(dateKey)) { 
-                jobsByDate.set(dateKey, []); 
-            }
-            if (!jobsByDate.get(dateKey).some(j => j.jobID === job.jobID)) {
-                jobsByDate.get(dateKey).push(job);
-            }
-        });
+      const container = document.getElementById('jobCalendarContainer');
+      const jobsByDate = new Map();
 
-        const year = calendarDate.getFullYear();
-        const month = calendarDate.getMonth();
-        const monthNames = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
-        const firstDayOfMonth = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const today = new Date();
-        const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        
-        let html = `<div class="bg-white p-4 rounded-lg shadow-md">
+      jobs.forEach(job => {
+        if (!job.date) return;
+        const dateKey = job.date.substring(0, 10);
+
+        if (!jobsByDate.has(dateKey)) {
+          jobsByDate.set(dateKey, []);
+        }
+        if (!jobsByDate.get(dateKey).some(j => j.jobID === job.jobID)) {
+          jobsByDate.get(dateKey).push(job);
+        }
+      });
+
+      const year = calendarDate.getFullYear();
+      const month = calendarDate.getMonth();
+      const monthNames = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
+      const firstDayOfMonth = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const today = new Date();
+      const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+      let html = `<div class="bg-white p-4 rounded-lg shadow-md">
           <div class="flex justify-between items-center mb-4">
             <button onclick="changeMonth(-1)" class="px-3 py-1 bg-gray-200 rounded">&lt; Tháng trước</button>
             <h3 class="text-xl font-bold">${monthNames[month]} ${year}</h3>
@@ -330,65 +387,65 @@
             <thead><tr><th>CN</th><th>T2</th><th>T3</th><th>T4</th><th>T5</th><th>T6</th><th>T7</th></tr></thead>
             <tbody><tr>`;
 
-        for (let i = 0; i < firstDayOfMonth; i++) { html += `<td></td>`; }
+      for (let i = 0; i < firstDayOfMonth; i++) { html += `<td></td>`; }
 
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const isTodayClass = dateKey === todayString ? 'today' : '';
-            html += `<td class="${isTodayClass}"><div class="calendar-day-number">${day}</div>`;
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isTodayClass = dateKey === todayString ? 'today' : '';
+        html += `<td class="${isTodayClass}"><div class="calendar-day-number">${day}</div>`;
 
-            if (jobsByDate.has(dateKey)) {
-                jobsByDate.get(dateKey).forEach(job => {
-                    html += `<div class="job-entry" onclick="openJobModal('${job.jobID}')" title="${job.jobName}">${job.jobName}</div>`;
-                });
-            }
-            html += `</td>`;
-            if ((firstDayOfMonth + day) % 7 === 0 && day < daysInMonth) { html += `</tr><tr>`; }
+        if (jobsByDate.has(dateKey)) {
+          jobsByDate.get(dateKey).forEach(job => {
+            html += `<div class="job-entry" onclick="openJobModal('${job.jobID}')" title="${job.jobName}">${job.jobName}</div>`;
+          });
         }
-        
-        html += `</tr></tbody></table></div>`;
-        container.innerHTML = html;
+        html += `</td>`;
+        if ((firstDayOfMonth + day) % 7 === 0 && day < daysInMonth) { html += `</tr><tr>`; }
+      }
+
+      html += `</tr></tbody></table></div>`;
+      container.innerHTML = html;
     }
 
     function changeMonth(offset) {
-        calendarDate.setMonth(calendarDate.getMonth() + offset);
-        renderCurrentView();
+      calendarDate.setMonth(calendarDate.getMonth() + offset);
+      renderCurrentView();
     }
-    
+
     // --- JOB CRUD AND MODAL FUNCTIONS ---
     let currentEditingJobId = null;
     async function openJobModal(jobId) {
-        currentEditingJobId = jobId;
-        const assignmentsForJob = allAssignmentsData.filter(j => j.jobID === jobId);
-        if (assignmentsForJob.length === 0) return alert("Không tìm thấy thông tin job.");
-        const job = assignmentsForJob[0];
-        document.getElementById("modalJobId").value = job.jobID;
-        document.getElementById("modalJobName").value = job.jobName || "";
-        document.getElementById("modalJobDate").value = job.date ? job.date.substring(0, 10) : "";
-        const staffRes = await axios.get(SCRIPT_URL + "?action=staffs");
-        const allStaffsMap = staffRes.data.reduce((map, s) => (map[s.code] = s, map), {});
-        const container = document.getElementById("modalJobStaffList");
-        container.innerHTML = `<div class="grid grid-cols-5 gap-2 font-bold text-sm pb-1 border-b"><span class="col-span-2">Nhân sự</span><span class="text-center">Nhập Cost (nghìn)</span><span class="text-center">Thành tiền</span><span class="text-center">Hành động</span></div>`;
-        assignmentsForJob.forEach(a => {
-            const paymentStatus = a.payment || "Chưa thanh toán";
-            const paymentClass = paymentStatus === 'Chưa thanh toán' ? 'text-red-500' : 'text-green-600';
-            const buttonText = paymentStatus === 'Chưa thanh toán' ? 'Thanh toán' : 'Hủy TT';
-            const costInThousands = a.cost > 0 ? a.cost / 1000 : '';
-            const formattedCost = a.cost > 0 ? new Intl.NumberFormat('de-DE').format(a.cost) + ' VNĐ' : '';
-            const div = document.createElement("div");
-            div.className = "grid grid-cols-5 gap-2 items-center py-1";
-            div.innerHTML = `<span class="col-span-2">${a.staffCode} (${allStaffsMap[a.staffCode]?.name || "?"})</span><input type="number" value="${costInThousands}" class="border p-1 rounded w-full text-right" data-staff-code="${a.staffCode}" oninput="updateCostDisplay(this.value, 'modal_display_cost_${a.staffCode}')"><span id="modal_display_cost_${a.staffCode}" class="text-right text-gray-600 font-mono">${formattedCost}</span><div class="flex justify-center items-center space-x-1"><span class="font-semibold text-sm ${paymentClass}">${paymentStatus}</span><button onclick="updatePaymentStatus('${a.jobID}', '${a.staffCode}')" class="bg-gray-200 hover:bg-gray-300 text-xs px-2 py-1 rounded">${buttonText}</button></div>`;
-            container.appendChild(div);
-        });
-        document.getElementById("jobModal").classList.remove("hidden");
+      currentEditingJobId = jobId;
+      const assignmentsForJob = allAssignmentsData.filter(j => j.jobID === jobId);
+      if (assignmentsForJob.length === 0) return alert("Không tìm thấy thông tin job.");
+      const job = assignmentsForJob[0];
+      document.getElementById("modalJobId").value = job.jobID;
+      document.getElementById("modalJobName").value = job.jobName || "";
+      document.getElementById("modalJobDate").value = job.date ? job.date.substring(0, 10) : "";
+      const staffRes = await axios.get(SCRIPT_URL + "?action=staffs");
+      const allStaffsMap = staffRes.data.reduce((map, s) => (map[s.code] = s, map), {});
+      const container = document.getElementById("modalJobStaffList");
+      container.innerHTML = `<div class="grid grid-cols-5 gap-2 font-bold text-sm pb-1 border-b"><span class="col-span-2">Nhân sự</span><span class="text-center">Nhập Cost (nghìn)</span><span class="text-center">Thành tiền</span><span class="text-center">Hành động</span></div>`;
+      assignmentsForJob.forEach(a => {
+        const paymentStatus = a.payment || "Chưa thanh toán";
+        const paymentClass = paymentStatus === 'Chưa thanh toán' ? 'text-red-500' : 'text-green-600';
+        const buttonText = paymentStatus === 'Chưa thanh toán' ? 'Thanh toán' : 'Hủy TT';
+        const costInThousands = a.cost > 0 ? a.cost / 1000 : '';
+        const formattedCost = a.cost > 0 ? new Intl.NumberFormat('de-DE').format(a.cost) + ' VNĐ' : '';
+        const div = document.createElement("div");
+        div.className = "grid grid-cols-5 gap-2 items-center py-1";
+        div.innerHTML = `<span class="col-span-2">${a.staffCode} (${allStaffsMap[a.staffCode]?.name || "?"})</span><input type="number" value="${costInThousands}" class="border p-1 rounded w-full text-right" data-staff-code="${a.staffCode}" oninput="updateCostDisplay(this.value, 'modal_display_cost_${a.staffCode}')"><span id="modal_display_cost_${a.staffCode}" class="text-right text-gray-600 font-mono">${formattedCost}</span><div class="flex justify-center items-center space-x-1"><span class="font-semibold text-sm ${paymentClass}">${paymentStatus}</span><button onclick="updatePaymentStatus('${a.jobID}', '${a.staffCode}')" class="bg-gray-200 hover:bg-gray-300 text-xs px-2 py-1 rounded">${buttonText}</button></div>`;
+        container.appendChild(div);
+      });
+      document.getElementById("jobModal").classList.remove("hidden");
     }
-    
+
     function closeModal() { document.getElementById("jobModal").classList.add("hidden"); currentEditingJobId = null; }
     async function createJob() { const id = document.getElementById("newJobId").value.trim(); const name = document.getElementById("newJobName").value.trim(); const date = document.getElementById("newJobDate").value; if (!id || !name || !date) return alert("Vui lòng nhập đầy đủ thông tin job"); const staffCheckboxes = document.querySelectorAll("#staffCheckboxList input[type=checkbox]:checked"); const staff = []; for (const cb of staffCheckboxes) { const costInThousands = document.getElementById("cost_" + cb.value).value; const cost = (parseInt(costInThousands) || 0) * 1000; staff.push({ staffCode: cb.value, cost: cost }); } if (staff.length === 0) return alert("Phải chọn ít nhất 1 nhân sự cho job"); try { const res = await axios.post(SCRIPT_URL, { action: "create-job", id, name, date, staff }); if (res.data.status === "ok") { alert("Tạo job thành công"); loadJobs(); showTab("jobList"); } else { alert("Lỗi tạo job: " + res.data.message); } } catch (e) { alert("Lỗi kết nối server: " + e.message); } }
     async function updateJob() { if (!currentEditingJobId) return alert("Không có job đang chỉnh sửa"); const id = document.getElementById("modalJobId").value.trim(); const name = document.getElementById("modalJobName").value.trim(); const date = document.getElementById("modalJobDate").value; if (!id || !name || !date) return alert("Vui lòng nhập đầy đủ thông tin"); const costInputs = [...document.querySelectorAll("#modalJobStaffList input[type=number]")]; const staff = costInputs.map(input => { const staffCode = input.dataset.staffCode; const costInThousands = input.value; const cost = (parseInt(costInThousands) || 0) * 1000; return { staffCode, cost }; }); try { const res = await axios.post(SCRIPT_URL, { action: "update-job", id, name, date, staff }); if (res.data.status === "ok") { alert("Cập nhật job thành công."); closeModal(); loadJobs(); } else { alert("Lỗi cập nhật job: " + res.data.message); } } catch (e) { alert("Lỗi kết nối server: " + e.message); } }
     async function deleteJob() { if (!currentEditingJobId) return alert("Không có job đang chọn"); if (!confirm("Bạn có chắc muốn xoá job này?")) return; try { const res = await axios.post(SCRIPT_URL, { action: "delete-job", id: currentEditingJobId }); if (res.data.status === "ok") { alert("Xoá job thành công"); closeModal(); loadJobs(); } else { alert("Lỗi xoá job: " + res.data.message); } } catch (e) { alert("Lỗi kết nối server: " + e.message); } }
-    async function updatePaymentStatus(jobID, staffCode) { const buttonElement = document.querySelector(`button[onclick="updatePaymentStatus('${jobID}', '${staffCode}')"]`); const spanElement = buttonElement.previousElementSibling; if (!spanElement) return; const currentStatus = spanElement.textContent.trim(); const newStatus = currentStatus === 'Đã thanh toán' ? 'Chưa thanh toán' : 'Đã thanh toán'; try { const res = await axios.post(SCRIPT_URL, { action: "update-payment", jobID, staffCode, paymentStatus: newStatus }); if (res.data.status === "ok") { const assignmentToUpdate = allAssignmentsData.find(a => a.jobID === jobID && a.staffCode === staffCode); if (assignmentToUpdate) assignmentToUpdate.payment = newStatus; applyFiltersAndRender(); openJobModal(jobID); } else { alert("Lỗi cập nhật trạng thái: " + res.data.message); } } catch(e) { alert("Lỗi kết nối khi cập nhật thanh toán: " + e.message); } }
-    
+    async function updatePaymentStatus(jobID, staffCode) { const buttonElement = document.querySelector(`button[onclick="updatePaymentStatus('${jobID}', '${staffCode}')"]`); const spanElement = buttonElement.previousElementSibling; if (!spanElement) return; const currentStatus = spanElement.textContent.trim(); const newStatus = currentStatus === 'Đã thanh toán' ? 'Chưa thanh toán' : 'Đã thanh toán'; try { const res = await axios.post(SCRIPT_URL, { action: "update-payment", jobID, staffCode, paymentStatus: newStatus }); if (res.data.status === "ok") { const assignmentToUpdate = allAssignmentsData.find(a => a.jobID === jobID && a.staffCode === staffCode); if (assignmentToUpdate) assignmentToUpdate.payment = newStatus; applyFiltersAndRender(); openJobModal(jobID); } else { alert("Lỗi cập nhật trạng thái: " + res.data.message); } } catch (e) { alert("Lỗi kết nối khi cập nhật thanh toán: " + e.message); } }
+
     // --- STAFF CRUD AND MODAL FUNCTIONS ---
     function generateJobId() { const random = Math.floor(Math.random() * 10000).toString().padStart(4, "0"); document.getElementById("newJobId").value = "JOB" + random; }
     async function loadStaffs() { try { const res = await axios.get(SCRIPT_URL + "?action=staffs"); const allStaffs = res.data; const container = document.getElementById("staffListContainer"); if (allStaffs.length === 0) { container.innerHTML = "<p>Chưa có nhân sự nào.</p>"; return; } let html = `<table class="w-full border-collapse border bg-white"><thead><tr class="bg-blue-800 text-white"><th class="border p-2 text-left">Mã Nhân sự</th><th class="border p-2 text-left">Tên</th><th class="border p-2 text-left">Vai trò</th><th class="border p-2 text-center">Thao tác</th></tr></thead><tbody>`; allStaffs.forEach(s => { html += `<tr class="hover:bg-gray-50"><td class="border p-2 font-mono">${s.code}</td><td class="border p-2">${s.name}</td><td class="border p-2">${s.role}</td><td class="border p-2 text-center"><button onclick="openStaffModal('${s.code}')" class="text-blue-600 hover:underline">Sửa / Xoá</button></td></tr>`; }); html += "</tbody></table>"; container.innerHTML = html; } catch (e) { alert("Lỗi tải dữ liệu nhân sự: " + e.message); } }
@@ -402,6 +459,7 @@
 
     // --- INITIAL LOAD ---
     showTab("jobList");
-</script>
+  </script>
 </body>
+
 </html>
