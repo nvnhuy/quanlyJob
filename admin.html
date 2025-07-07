@@ -120,7 +120,7 @@
           <input id="modalJobName" class="border p-2 w-full mb-2" placeholder="Tên công việc" />
           <input id="modalJobDate" class="border p-2 w-full mb-2" type="date" />
           <h4 class="font-semibold mt-4 mb-2">Phân công nhân sự</h4>
-          <div id="modalJobStaffList" class="space-y-2 border p-2 rounded"></div>
+          <div id="modalJobStaffList" class="space-y-2 border p-2 rounded min-h-[100px]"></div>
           <div class="flex space-x-2 mt-4">
             <button onclick="updateJob()" class="bg-blue-600 text-white px-4 py-2 rounded">Lưu thay đổi công
               việc</button>
@@ -314,17 +314,17 @@
       }
 
       let html = `<table class="w-full border-collapse border bg-white shadow-md rounded-lg">
-            <thead class="bg-blue-800 text-white">
-                <tr>
-                    <th class="border p-2 text-left">Tên công việc</th>
-                    <th class="border p-2 text-center">Ngày</th>
-                    <th class="border p-2 text-left">Nhân sự</th>
-                    <th class="border p-2 text-right">Cost</th>
-                    <th class="border p-2 text-center">Thanh toán</th>
-                    <th class="border p-2 text-center">Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>`;
+                    <thead class="bg-blue-800 text-white">
+                        <tr>
+                            <th class="border p-2 text-left">Tên công việc</th>
+                            <th class="border p-2 text-center">Ngày</th>
+                            <th class="border p-2 text-left">Nhân sự</th>
+                            <th class="border p-2 text-right">Cost</th>
+                            <th class="border p-2 text-center">Thanh toán</th>
+                            <th class="border p-2 text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
 
       for (const jobID in groupedJobs) {
         const job = groupedJobs[jobID];
@@ -335,15 +335,15 @@
           html += `<tr class="hover:bg-gray-50">`;
           if (index === 0) {
             html += `<td class="border p-2 font-semibold" rowspan="${totalRows}">${job.jobName}<div class="text-xs font-mono text-gray-500">${jobID}</div></td>
-                             <td class="border p-2 text-center" rowspan="${totalRows}">${job.date ? job.date.substring(0, 10) : ''}</td>`;
+                                 <td class="border p-2 text-center" rowspan="${totalRows}">${job.date ? job.date.substring(0, 10) : ''}</td>`;
           }
           html += `<td class="border p-2">${assign.staffCode}</td>
-                         <td class="border p-2 text-right">${(assign.cost || 0).toLocaleString('vi-VN')}</td>
-                         <td class="border p-2 text-center font-bold ${paymentClass}">${paymentStatus}</td>`;
+                                 <td class="border p-2 text-right">${(assign.cost || 0).toLocaleString('vi-VN')}</td>
+                                 <td class="border p-2 text-center font-bold ${paymentClass}">${paymentStatus}</td>`;
           if (index === 0) {
             html += `<td class="border p-2 text-center" rowspan="${totalRows}">
-                                <button onclick="openJobModal('${jobID}')" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm">Xem / Sửa</button>
-                              </td>`;
+                                    <button onclick="openJobModal('${jobID}')" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm">Xem / Sửa</button>
+                                  </td>`;
           }
           html += `</tr>`;
         });
@@ -416,36 +416,60 @@
     let currentEditingJobId = null;
     async function openJobModal(jobId) {
       currentEditingJobId = jobId;
-      const assignmentsForJob = allAssignmentsData.filter(j => j.jobID === jobId);
-      if (assignmentsForJob.length === 0) return alert("Không tìm thấy thông tin job.");
-      const job = assignmentsForJob[0];
-      document.getElementById("modalJobId").value = job.jobID;
-      document.getElementById("modalJobName").value = job.jobName || "";
-      document.getElementById("modalJobDate").value = job.date ? job.date.substring(0, 10) : "";
-      const staffRes = await axios.get(SCRIPT_URL + "?action=staffs");
-      const allStaffsMap = staffRes.data.reduce((map, s) => (map[s.code] = s, map), {});
-      const container = document.getElementById("modalJobStaffList");
-      container.innerHTML = `<div class="grid grid-cols-5 gap-2 font-bold text-sm pb-1 border-b"><span class="col-span-2">Nhân sự</span><span class="text-center">Nhập Cost (nghìn)</span><span class="text-center">Thành tiền</span><span class="text-center">Hành động</span></div>`;
-      assignmentsForJob.forEach(a => {
-        const paymentStatus = a.payment || "Chưa thanh toán";
-        const paymentClass = paymentStatus === 'Chưa thanh toán' ? 'text-red-500' : 'text-green-600';
-        const buttonText = paymentStatus === 'Chưa thanh toán' ? 'Thanh toán' : 'Hủy TT';
-        const costInThousands = a.cost > 0 ? a.cost / 1000 : '';
-        const formattedCost = a.cost > 0 ? new Intl.NumberFormat('de-DE').format(a.cost) + ' VNĐ' : '';
-        const div = document.createElement("div");
-        div.className = "grid grid-cols-5 gap-2 items-center py-1";
-        div.innerHTML = `<span class="col-span-2">${a.staffCode} (${allStaffsMap[a.staffCode]?.name || "?"})</span><input type="number" value="${costInThousands}" class="border p-1 rounded w-full text-right" data-staff-code="${a.staffCode}" oninput="updateCostDisplay(this.value, 'modal_display_cost_${a.staffCode}')"><span id="modal_display_cost_${a.staffCode}" class="text-right text-gray-600 font-mono">${formattedCost}</span><div class="flex justify-center items-center space-x-1"><span class="font-semibold text-sm ${paymentClass}">${paymentStatus}</span><button onclick="updatePaymentStatus('${a.jobID}', '${a.staffCode}')" class="bg-gray-200 hover:bg-gray-300 text-xs px-2 py-1 rounded">${buttonText}</button></div>`;
-        container.appendChild(div);
-      });
-      document.getElementById("jobModal").classList.remove("hidden");
-    }
+      const modal = document.getElementById("jobModal");
+      const staffListContainer = document.getElementById("modalJobStaffList");
+      
+      // Show modal and loading spinner
+      modal.classList.remove("hidden");
+      staffListContainer.innerHTML = `
+        <div class="flex justify-center items-center p-8">
+            <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="ml-4 text-gray-600">Đang tải chi tiết...</span>
+        </div>`;
 
+      try {
+        const assignmentsForJob = allAssignmentsData.filter(j => j.jobID === jobId);
+        if (assignmentsForJob.length === 0) {
+            staffListContainer.innerHTML = `<p class="text-red-500 text-center p-4">Không tìm thấy thông tin công việc.</p>`;
+            return;
+        }
+        const job = assignmentsForJob[0];
+        document.getElementById("modalJobId").value = job.jobID;
+        document.getElementById("modalJobName").value = job.jobName || "";
+        document.getElementById("modalJobDate").value = job.date ? job.date.substring(0, 10) : "";
+        
+        // Fetch staff list - this is the async part
+        const staffRes = await axios.get(SCRIPT_URL + "?action=staffs");
+        const allStaffsMap = staffRes.data.reduce((map, s) => (map[s.code] = s, map), {});
+        
+        // Clear spinner and render actual content
+        staffListContainer.innerHTML = `<div class="grid grid-cols-5 gap-2 font-bold text-sm pb-1 border-b"><span class="col-span-2">Nhân sự</span><span class="text-center">Nhập Cost (nghìn)</span><span class="text-center">Thành tiền</span><span class="text-center">Hành động</span></div>`;
+        assignmentsForJob.forEach(a => {
+            const paymentStatus = a.payment || "Chưa thanh toán";
+            const paymentClass = paymentStatus === 'Chưa thanh toán' ? 'text-red-500' : 'text-green-600';
+            const buttonText = paymentStatus === 'Chưa thanh toán' ? 'Thanh toán' : 'Hủy TT';
+            const costInThousands = a.cost > 0 ? a.cost / 1000 : '';
+            const formattedCost = a.cost > 0 ? new Intl.NumberFormat('de-DE').format(a.cost) + ' VNĐ' : '';
+            const div = document.createElement("div");
+            div.className = "grid grid-cols-5 gap-2 items-center py-1";
+            div.innerHTML = `<span class="col-span-2">${a.staffCode} (${allStaffsMap[a.staffCode]?.name || "?"})</span><input type="number" value="${costInThousands}" class="border p-1 rounded w-full text-right" data-staff-code="${a.staffCode}" oninput="updateCostDisplay(this.value, 'modal_display_cost_${a.staffCode}')"><span id="modal_display_cost_${a.staffCode}" class="text-right text-gray-600 font-mono">${formattedCost}</span><div class="flex justify-center items-center space-x-1"><span class="font-semibold text-sm ${paymentClass}">${paymentStatus}</span><button onclick="updatePaymentStatus('${a.jobID}', '${a.staffCode}')" class="bg-gray-200 hover:bg-gray-300 text-xs px-2 py-1 rounded">${buttonText}</button></div>`;
+            staffListContainer.appendChild(div);
+        });
+      } catch (e) {
+          staffListContainer.innerHTML = `<p class="text-red-500 text-center p-4">Lỗi tải chi tiết nhân sự: ${e.message}</p>`;
+          console.error(e);
+      }
+    }
+    
     function closeModal() { document.getElementById("jobModal").classList.add("hidden"); currentEditingJobId = null; }
     async function createJob() { const id = document.getElementById("newJobId").value.trim(); const name = document.getElementById("newJobName").value.trim(); const date = document.getElementById("newJobDate").value; if (!id || !name || !date) return alert("Vui lòng nhập đầy đủ thông tin job"); const staffCheckboxes = document.querySelectorAll("#staffCheckboxList input[type=checkbox]:checked"); const staff = []; for (const cb of staffCheckboxes) { const costInThousands = document.getElementById("cost_" + cb.value).value; const cost = (parseInt(costInThousands) || 0) * 1000; staff.push({ staffCode: cb.value, cost: cost }); } if (staff.length === 0) return alert("Phải chọn ít nhất 1 nhân sự cho job"); try { const res = await axios.post(SCRIPT_URL, { action: "create-job", id, name, date, staff }); if (res.data.status === "ok") { alert("Tạo job thành công"); loadJobs(); showTab("jobList"); } else { alert("Lỗi tạo job: " + res.data.message); } } catch (e) { alert("Lỗi kết nối server: " + e.message); } }
     async function updateJob() { if (!currentEditingJobId) return alert("Không có job đang chỉnh sửa"); const id = document.getElementById("modalJobId").value.trim(); const name = document.getElementById("modalJobName").value.trim(); const date = document.getElementById("modalJobDate").value; if (!id || !name || !date) return alert("Vui lòng nhập đầy đủ thông tin"); const costInputs = [...document.querySelectorAll("#modalJobStaffList input[type=number]")]; const staff = costInputs.map(input => { const staffCode = input.dataset.staffCode; const costInThousands = input.value; const cost = (parseInt(costInThousands) || 0) * 1000; return { staffCode, cost }; }); try { const res = await axios.post(SCRIPT_URL, { action: "update-job", id, name, date, staff }); if (res.data.status === "ok") { alert("Cập nhật job thành công."); closeModal(); loadJobs(); } else { alert("Lỗi cập nhật job: " + res.data.message); } } catch (e) { alert("Lỗi kết nối server: " + e.message); } }
     async function deleteJob() { if (!currentEditingJobId) return alert("Không có job đang chọn"); if (!confirm("Bạn có chắc muốn xoá job này?")) return; try { const res = await axios.post(SCRIPT_URL, { action: "delete-job", id: currentEditingJobId }); if (res.data.status === "ok") { alert("Xoá job thành công"); closeModal(); loadJobs(); } else { alert("Lỗi xoá job: " + res.data.message); } } catch (e) { alert("Lỗi kết nối server: " + e.message); } }
     async function updatePaymentStatus(jobID, staffCode) { const buttonElement = document.querySelector(`button[onclick="updatePaymentStatus('${jobID}', '${staffCode}')"]`); const spanElement = buttonElement.previousElementSibling; if (!spanElement) return; const currentStatus = spanElement.textContent.trim(); const newStatus = currentStatus === 'Đã thanh toán' ? 'Chưa thanh toán' : 'Đã thanh toán'; try { const res = await axios.post(SCRIPT_URL, { action: "update-payment", jobID, staffCode, paymentStatus: newStatus }); if (res.data.status === "ok") { const assignmentToUpdate = allAssignmentsData.find(a => a.jobID === jobID && a.staffCode === staffCode); if (assignmentToUpdate) assignmentToUpdate.payment = newStatus; applyFiltersAndRender(); openJobModal(jobID); } else { alert("Lỗi cập nhật trạng thái: " + res.data.message); } } catch (e) { alert("Lỗi kết nối khi cập nhật thanh toán: " + e.message); } }
-
+    
     // --- STAFF CRUD AND MODAL FUNCTIONS ---
     function generateJobId() { const random = Math.floor(Math.random() * 10000).toString().padStart(4, "0"); document.getElementById("newJobId").value = "JOB" + random; }
     async function loadStaffs() { try { const res = await axios.get(SCRIPT_URL + "?action=staffs"); const allStaffs = res.data; const container = document.getElementById("staffListContainer"); if (allStaffs.length === 0) { container.innerHTML = "<p>Chưa có nhân sự nào.</p>"; return; } let html = `<table class="w-full border-collapse border bg-white"><thead><tr class="bg-blue-800 text-white"><th class="border p-2 text-left">Mã Nhân sự</th><th class="border p-2 text-left">Tên</th><th class="border p-2 text-left">Vai trò</th><th class="border p-2 text-center">Thao tác</th></tr></thead><tbody>`; allStaffs.forEach(s => { html += `<tr class="hover:bg-gray-50"><td class="border p-2 font-mono">${s.code}</td><td class="border p-2">${s.name}</td><td class="border p-2">${s.role}</td><td class="border p-2 text-center"><button onclick="openStaffModal('${s.code}')" class="text-blue-600 hover:underline">Sửa / Xoá</button></td></tr>`; }); html += "</tbody></table>"; container.innerHTML = html; } catch (e) { alert("Lỗi tải dữ liệu nhân sự: " + e.message); } }
